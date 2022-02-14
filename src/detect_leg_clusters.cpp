@@ -38,6 +38,7 @@
 
 #include <visualization_msgs/Marker.h>
 #include <sensor_msgs/LaserScan.h>
+#include <std_msgs/Int8.h>
 
 // OpenCV
 #include <opencv2/core/core.hpp>
@@ -103,6 +104,7 @@ public:
     // ROS subscribers + publishers
     scan_sub_ =  nh_.subscribe(scan_topic, 10, &DetectLegClusters::laserCallback, this);
     markers_pub_ = nh_.advertise<visualization_msgs::Marker>("visualization_marker", 20);
+    detected_leg_count_pub_ = nh_.advertise<std_msgs::Int8>("detected_leg_count", 20);
     detected_leg_clusters_pub_ = nh_.advertise<leg_tracker::LegArray>("detected_leg_clusters", 20);
   }
 
@@ -121,6 +123,7 @@ private:
 
   ros::NodeHandle nh_;
   ros::Publisher markers_pub_;
+  ros::Publisher detected_leg_count_pub_;
   ros::Publisher detected_leg_clusters_pub_;
   ros::Subscriber scan_sub_;
 
@@ -154,6 +157,8 @@ private:
     leg_tracker::LegArray detected_leg_clusters;
     detected_leg_clusters.header.frame_id = scan->header.frame_id;
     detected_leg_clusters.header.stamp = scan->header.stamp;
+
+    std_msgs::Int8 detected_leg_count;
 
     // Find out the time that should be used for tfs
     bool transform_available;
@@ -293,6 +298,9 @@ private:
     }
     num_prev_markers_published_ = id_num; // For the next callback
 
+    detected_leg_count.data = detected_leg_clusters.legs.size();
+
+    detected_leg_count_pub_.publish(detected_leg_count);
     detected_leg_clusters_pub_.publish(detected_leg_clusters);
   }
 
