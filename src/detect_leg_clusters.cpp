@@ -74,18 +74,20 @@ public:
     std::string forest_file;
     std::string scan_topic;
     std::string enable_topic;
-    if (!nh_.getParam("forest_file", forest_file))
+
+    ros::NodeHandle nh_priv_("~");
+    if (!nh_priv_.getParam("forest_file", forest_file))
       ROS_ERROR("ERROR! Could not get random forest filename");
-    nh_.param("scan_topic", scan_topic, std::string("scan"));
-    nh_.param("enable_topic", enable_topic, std::string("leg_detector/enable"));
-    nh_.param("fixed_frame", fixed_frame_, std::string("odom"));
-    nh_.param("detection_threshold", detection_threshold_, -1.0);
-    nh_.param("cluster_dist_euclid", cluster_dist_euclid_, 0.13);
-    nh_.param("min_points_per_cluster", min_points_per_cluster_, 3);                
-    nh_.param("max_detect_distance", max_detect_distance_, 10.0);   
-    nh_.param("marker_display_lifetime", marker_display_lifetime_, 0.2);   
-    nh_.param("use_scan_header_stamp_for_tfs", use_scan_header_stamp_for_tfs_, false);
-    nh_.param("max_detected_clusters", max_detected_clusters_, -1);
+    nh_priv_.param("scan_topic", scan_topic, std::string("scan"));
+    nh_priv_.param("enable_topic", enable_topic, std::string("leg_detector/enable"));
+    nh_priv_.param("fixed_frame", fixed_frame_, std::string("odom"));
+    nh_priv_.param("detection_threshold", detection_threshold_, -1.0);
+    nh_priv_.param("cluster_dist_euclid", cluster_dist_euclid_, 0.13);
+    nh_priv_.param("min_points_per_cluster", min_points_per_cluster_, 3);
+    nh_priv_.param("max_detect_distance", max_detect_distance_, 10.0);
+    nh_priv_.param("marker_display_lifetime", marker_display_lifetime_, 0.2);
+    nh_priv_.param("use_scan_header_stamp_for_tfs", use_scan_header_stamp_for_tfs_, false);
+    nh_priv_.param("max_detected_clusters", max_detected_clusters_, -1);
 
     // Print back
     ROS_INFO("forest_file: %s", forest_file.c_str());

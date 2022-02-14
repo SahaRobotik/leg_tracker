@@ -1,14 +1,21 @@
 <?xml version="1.0" ?>
 <launch>
-  <!-- params -->
-  <param name="forest_file" value="$(find leg_tracker)/config/trained_leg_detector_res=0.33.yaml" />
-  <param name="scan_topic" value="/scan" />
-  <param name="fixed_frame" value="/base_link"/>
-  <param name="scan_frequency" value="10"/>  
   
+  <!-- args -->
+  <arg name="scan_topic" default="scan" />
+  <arg name="enable_topic" default="leg_detector/enable" />
+  <arg name="fixed_frame" default="base_link" />
+  <arg name="scan_frequency" default="10" />
+  <arg name="forest_file" default="$(find leg_tracker)/config/trained_leg_detector_res=0.33.yaml" />
   
   <!-- run detect_leg_clusters -->  
-  <node pkg="leg_tracker" type="detect_leg_clusters" name="detect_leg_clusters" output="screen"/>
+  <node pkg="leg_tracker" type="detect_leg_clusters" name="detect_leg_clusters" output="screen">
+    <param name="scan_topic" value="$(arg scan_topic)" />
+    <param name="enable_topic" value="$(arg enable_topic)" />
+    <param name="fixed_frame" value="$(arg fixed_frame)" />
+    <param name="scan_frequency" value="$(arg scan_frequency)" />
+    <param name="forest_file" value="$(arg forest_file)" />
+  </node>
 
   <!-- run joint_leg_tracker -->
   <node pkg="leg_tracker" type="joint_leg_tracker.py" name="joint_leg_tracker" output="screen"/>
