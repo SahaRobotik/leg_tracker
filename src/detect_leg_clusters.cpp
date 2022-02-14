@@ -39,6 +39,7 @@
 #include <visualization_msgs/Marker.h>
 #include <sensor_msgs/LaserScan.h>
 #include <std_msgs/Int8.h>
+#include <std_msgs/Bool.h>
 
 // OpenCV
 #include <opencv2/core/core.hpp>
@@ -65,15 +66,18 @@ public:
   * @brief Constructor
   */
   DetectLegClusters():
+  enabled_(true),
   scan_num_(0),
   num_prev_markers_published_(0)
   {  
     // Get ROS parameters  
     std::string forest_file;
     std::string scan_topic;
+    std::string enable_topic;
     if (!nh_.getParam("forest_file", forest_file))
       ROS_ERROR("ERROR! Could not get random forest filename");
     nh_.param("scan_topic", scan_topic, std::string("scan"));
+    nh_.param("enable_topic", enable_topic, std::string("leg_detector/enable"));
     nh_.param("fixed_frame", fixed_frame_, std::string("odom"));
     nh_.param("detection_threshold", detection_threshold_, -1.0);
     nh_.param("cluster_dist_euclid", cluster_dist_euclid_, 0.13);
@@ -86,6 +90,7 @@ public:
     // Print back
     ROS_INFO("forest_file: %s", forest_file.c_str());
     ROS_INFO("scan_topic: %s", scan_topic.c_str());
+    ROS_INFO("enable_topic: %s", enable_topic.c_str());
     ROS_INFO("fixed_frame: %s", fixed_frame_.c_str());
     ROS_INFO("detection_threshold: %.2f", detection_threshold_);
     ROS_INFO("cluster_dist_euclid: %.2f", cluster_dist_euclid_);
@@ -103,6 +108,7 @@ public:
 
     // ROS subscribers + publishers
     scan_sub_ =  nh_.subscribe(scan_topic, 10, &DetectLegClusters::laserCallback, this);
+    enable_sub_ =  nh_.subscribe(enable_topic, 10, &DetectLegClusters::enableCallback, this);
     markers_pub_ = nh_.advertise<visualization_msgs::Marker>("visualization_marker", 20);
     detected_leg_count_pub_ = nh_.advertise<std_msgs::Int8>("detected_leg_count", 20);
     detected_leg_clusters_pub_ = nh_.advertise<leg_tracker::LegArray>("detected_leg_clusters", 20);
@@ -117,6 +123,7 @@ private:
 
   ClusterFeatures cf_;
 
+  bool enabled_;
   int scan_num_;
   bool use_scan_header_stamp_for_tfs_;
   ros::Time latest_scan_header_stamp_with_tf_available_;
@@ -126,6 +133,7 @@ private:
   ros::Publisher detected_leg_count_pub_;
   ros::Publisher detected_leg_clusters_pub_;
   ros::Subscriber scan_sub_;
+  ros::Subscriber enable_sub_;
 
   std::string fixed_frame_;
   
@@ -146,7 +154,9 @@ private:
   * Called every time a laser scan is published.
   */
   void laserCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
-  {         
+  {
+    if(!enabled_) return;
+
     laser_processor::ScanProcessor processor(*scan); 
     processor.splitConnected(cluster_dist_euclid_);        
     processor.removeLessThan(min_points_per_cluster_);    
@@ -302,6 +312,14 @@ private:
 
     detected_leg_count_pub_.publish(detected_leg_count);
     detected_leg_clusters_pub_.publish(detected_leg_clusters);
+  }
+
+  /**
+  * @brief Callback function for enabling
+  */
+  void enableCallback(const std_msgs::Bool::ConstPtr& msg)
+  {
+    enabled_ = msg->data;
   }
 
 
